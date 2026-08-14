@@ -32,54 +32,107 @@
 const canvas = document.getElementById('jogo');
 const ctx = canvas.getContext('2d');
 
-let x = 200, y = 200;
-let dx = 20, dy = 0;
-let comida = {x:100, y:100};
+let cobra = [{x: 200, y: 200}];
+let dx = 20;
+let dy = 0;
+
+let comida = {
+  x: 100,
+  y: 100
+};
+
 let pontos = 0;
-let cobra = [{x,y}];
 
 document.addEventListener('keydown', e => {
-  if(e.key==='ArrowLeft' && dx===0){dx=-20;dy=0;}
-  if(e.key==='ArrowRight' && dx===0){dx=20;dy=0;}
-  if(e.key==='ArrowUp' && dy===0){dx=0;dy=-20;}
-  if(e.key==='ArrowDown' && dy===0){dx=0;dy=20;}
+  if (e.key === 'ArrowLeft' && dx === 0) {
+    dx = -20;
+    dy = 0;
+  }
+  if (e.key === 'ArrowRight' && dx === 0) {
+    dx = 20;
+    dy = 0;
+  }
+  if (e.key === 'ArrowUp' && dy === 0) {
+    dx = 0;
+    dy = -20;
+  }
+  if (e.key === 'ArrowDown' && dy === 0) {
+    dx = 0;
+    dy = 20;
+  }
 });
 
-function loop(){
-  ctx.fillStyle='black';
-  ctx.fillRect(0,0,400,400);
+function gameOver() {
+  alert('💀 Game Over! Pontos: ' + pontos);
+  cobra = [{x: 200, y: 200}];
+  dx = 20;
+  dy = 0;
+  pontos = 0;
+  comida = {
+    x: Math.floor(Math.random() * 20) * 20,
+    y: Math.floor(Math.random() * 20) * 20
+  };
+}
 
-  x += dx;
-  y += dy;
+function loop() {
+  ctx.fillStyle = 'black';
+  ctx.fillRect(0, 0, 400, 400);
 
-  if(x<0)x=380;
-  if(x>380)x=0;
-  if(y<0)y=380;
-  if(y>380)y=0;
+  const cabeca = {
+    x: cobra[0].x + dx,
+    y: cobra[0].y + dy
+  };
 
-  cobra.unshift({x,y});
+  // COLISÃO COM PAREDE
+  if (
+    cabeca.x < 0 ||
+    cabeca.x >= 400 ||
+    cabeca.y < 0 ||
+    cabeca.y >= 400
+  ) {
+    gameOver();
+    return;
+  }
 
-  if(x===comida.x && y===comida.y){
+  // COLISÃO COM O PRÓPRIO CORPO
+  for (let parte of cobra) {
+    if (cabeca.x === parte.x && cabeca.y === parte.y) {
+      gameOver();
+      return;
+    }
+  }
+
+  cobra.unshift(cabeca);
+
+  // COME COMIDA
+  if (cabeca.x === comida.x && cabeca.y === comida.y) {
     pontos++;
+
     comida = {
-      x: Math.floor(Math.random()*20)*20,
-      y: Math.floor(Math.random()*20)*20
+      x: Math.floor(Math.random() * 20) * 20,
+      y: Math.floor(Math.random() * 20) * 20
     };
-  }else{
+  } else {
     cobra.pop();
   }
 
-  ctx.fillStyle='red';
+  // DESENHA COMIDA
+  ctx.fillStyle = 'red';
   ctx.fillRect(comida.x, comida.y, 20, 20);
 
-  ctx.fillStyle='#22c55e';
-  cobra.forEach(p => ctx.fillRect(p.x,p.y,20,20));
+  // DESENHA COBRA
+  ctx.fillStyle = '#22c55e';
+  cobra.forEach(p => {
+    ctx.fillRect(p.x, p.y, 20, 20);
+  });
 
-  ctx.fillStyle='white';
-  ctx.fillText('Pontos: '+pontos, 10, 15);
+  // PONTOS
+  ctx.fillStyle = 'white';
+  ctx.font = '16px Arial';
+  ctx.fillText('Pontos: ' + pontos, 10, 20);
 }
 
-setInterval(loop,120);
+setInterval(loop, 120);
 </script>
 
 </body>
