@@ -1,156 +1,156 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0f172a" />
-    <meta
-      name="description"
-      content="Projeto React moderno desenvolvido por Vinícius Côrte"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Snake Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111827;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
+      flex-direction: column;
+    }
 
-    <title>Projeto React | Vinícius Côrte</title>
+    h1 {
+      margin-bottom: 10px;
+    }
 
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+    canvas {
+      background: #000;
+      border: 4px solid #22c55e;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+    }
+
+    #score {
+      margin: 10px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #22c55e;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #16a34a;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🐍 Jogo da Cobrinha</h1>
+  <div id="score">Pontos: 0</div>
+  <canvas id="game" width="400" height="400"></canvas>
+  <button onclick="restartGame()">Jogar Novamente</button>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const box = 20;
+    const canvasSize = 400;
+
+    let snake = [{ x: 200, y: 200 }];
+    let direction = "RIGHT";
+    let food = randomFood();
+    let score = 0;
+    let game;
+
+    document.addEventListener("keydown", changeDirection);
+
+    function randomFood() {
+      return {
+        x: Math.floor(Math.random() * (canvasSize / box)) * box,
+        y: Math.floor(Math.random() * (canvasSize / box)) * box
+      };
+    }
+
+    function changeDirection(event) {
+      if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+      if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+      if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+      if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+    }
+
+    function draw() {
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+      // comida
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x, food.y, box, box);
+
+      // cobra
+      for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = i === 0 ? "#22c55e" : "#86efac";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
       }
 
-      body {
-        font-family: Arial, Helvetica, sans-serif;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
-        color: white;
-        overflow: hidden;
+      let headX = snake[0].x;
+      let headY = snake[0].y;
+
+      if (direction === "LEFT") headX -= box;
+      if (direction === "UP") headY -= box;
+      if (direction === "RIGHT") headX += box;
+      if (direction === "DOWN") headY += box;
+
+      // comeu comida
+      if (headX === food.x && headY === food.y) {
+        score++;
+        document.getElementById("score").innerText = "Pontos: " + score;
+        food = randomFood();
+      } else {
+        snake.pop();
       }
 
-      .container {
-        text-align: center;
-        padding: 40px;
-        max-width: 700px;
+      const newHead = { x: headX, y: headY };
+
+      // colisão parede
+      if (
+        headX < 0 ||
+        headY < 0 ||
+        headX >= canvasSize ||
+        headY >= canvasSize ||
+        collision(newHead, snake)
+      ) {
+        clearInterval(game);
+        alert("💀 Game Over! Pontos: " + score);
+        return;
       }
 
-      .logo {
-        width: 90px;
-        height: 90px;
-        margin: 0 auto 24px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 42px;
-        font-weight: bold;
-        box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
-      }
+      snake.unshift(newHead);
+    }
 
-      h1 {
-        font-size: 3rem;
-        margin-bottom: 16px;
-      }
+    function collision(head, array) {
+      return array.some(segment => segment.x === head.x && segment.y === head.y);
+    }
 
-      p {
-        font-size: 1.1rem;
-        line-height: 1.7;
-        color: #cbd5e1;
-        margin-bottom: 32px;
-      }
+    function restartGame() {
+      snake = [{ x: 200, y: 200 }];
+      direction = "RIGHT";
+      food = randomFood();
+      score = 0;
+      document.getElementById("score").innerText = "Pontos: 0";
+      clearInterval(game);
+      game = setInterval(draw, 100);
+    }
 
-      .btn {
-        display: inline-block;
-        padding: 14px 28px;
-        border-radius: 12px;
-        text-decoration: none;
-        color: white;
-        background: linear-gradient(135deg, #2563eb, #7c3aed);
-        font-weight: bold;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
-      }
+    game = setInterval(draw, 100);
+  </script>
 
-      .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.45);
-      }
-
-      .footer {
-        margin-top: 40px;
-        font-size: 0.9rem;
-        color: #94a3b8;
-      }
-
-      .circle {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(60px);
-        opacity: 0.35;
-      }
-
-      .c1 {
-        width: 260px;
-        height: 260px;
-        background: #2563eb;
-        top: -80px;
-        left: -80px;
-      }
-
-      .c2 {
-        width: 320px;
-        height: 320px;
-        background: #7c3aed;
-        bottom: -120px;
-        right: -120px;
-      }
-
-      @media (max-width: 600px) {
-        h1 {
-          font-size: 2.2rem;
-        }
-
-        p {
-          font-size: 1rem;
-        }
-
-        .container {
-          padding: 24px;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="circle c1"></div>
-    <div class="circle c2"></div>
-
-    <div class="container">
-      <div class="logo">V</div>
-
-      <h1>Bem-vindo ao meu projeto React</h1>
-
-      <p>
-        Interface moderna, responsiva e preparada para evoluir com componentes,
-        rotas, integração com APIs e muito mais.
-      </p>
-
-      <a class="btn" href="https://github.com/cortevinicius" target="_blank">
-        Ver GitHub
-      </a>
-
-      <div class="footer">
-        Desenvolvido por Vinícius Côrte • React + HTML + CSS
-      </div>
-    </div>
-
-    <noscript>Você precisa habilitar o JavaScript para executar esta aplicação.</noscript>
-
-    <div id="root"></div>
-  </body>
+</body>
 </html>
